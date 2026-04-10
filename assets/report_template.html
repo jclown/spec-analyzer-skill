@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Compliance Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #fafbfc;
+            --card: #ffffff;
+            --text: #24292f;
+            --text-muted: #57606a;
+            --border: #d0d7de;
+            --accent: #0969da;
+            --success: #1a7f37;
+            --warning: #9a6700;
+            --danger: #cf222e;
+            --tag-bg: #ddf4ff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 24px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header .meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Language Toggle */
+        .lang-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .lang-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover { background: #f6f8fa; }
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .stat-card.danger .value { color: var(--danger); }
+        .stat-card.warning .value { color: var(--warning); }
+        .stat-card.success .value { color: var(--success); }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 14px;
+            background: #f6f8fa;
+        }
+
+        .card-body { padding: 16px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            background: #f6f8fa;
+            font-size: 12px;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f6f8fa; }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .tag-danger { background: #ffebe9; color: var(--danger); }
+        .tag-warning { background: #fff8c5; color: var(--warning); }
+        .tag-info { background: var(--tag-bg); color: var(--accent); }
+
+        /* Code */
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+            font-size: 12px;
+        }
+
+        /* Search & Filter */
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .search {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .search:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .filter-btn:hover { background: #f6f8fa; }
+        .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Violation Row */
+        .violation-row:hover { background: #f6f8fa; }
+        .violation-row.critical { background: #ffebe9; }
+        .violation-row.critical:hover { background: #ffd7d5; }
+
+        /* Section */
+        .section { margin-bottom: 24px; }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Rule */
+        .rule {
+            background: #f6f8fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .rule-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .rule-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .stats { grid-template-columns: 1fr; }
+            .toolbar { flex-wrap: wrap; }
+            .lang-toggle { position: static; margin-bottom: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="en">EN</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+            </div>
+            <h1 data-i18n="reportTitle">Code Compliance Report</h1>
+            <div class="meta">
+                <span><span data-i18n="project">Project</span>: {{PROJECT_NAME}}</span>
+                <span><span data-i18n="language">Language</span>: {{LANGUAGE}}</span>
+                <span><span data-i18n="spec">Spec</span>: {{SPEC_NAME}}</span>
+                <span><span data-i18n="date">Date</span>: {{DATE}}</span>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="value">{{TOTAL_FILES}}</div>
+                <div class="label" data-i18n="filesChecked">Files Checked</div>
+            </div>
+            <div class="stat-card {{SEVERITY_CLASS}}">
+                <div class="value">{{TOTAL_VIOLATIONS}}</div>
+                <div class="label" data-i18n="violations">Violations</div>
+            </div>
+            <div class="stat-card success">
+                <div class="value">{{COMPLIANCE_RATE}}%</div>
+                <div class="label" data-i18n="complianceRate">Compliance Rate</div>
+            </div>
+        </div>
+
+        <!-- Category Summary -->
+        <div class="card">
+            <div class="card-header" data-i18n="categoryStats">Category Statistics</div>
+            <div class="card-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="category">Category</th>
+                            <th data-i18n="violationCount">Violations</th>
+                            <th data-i18n="percentage">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{CATEGORY_ROWS}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Violations -->
+        <div class="card">
+            <div class="card-header">
+                <span data-i18n="detailedViolations">Detailed Violations</span>
+                <div class="toolbar" style="margin-top: 12px;">
+                    <input type="text" class="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search file or code..." id="search">
+                    <button class="filter-btn active" data-filter="all" data-i18n="all">All</button>
+                    <button class="filter-btn" data-filter="danger" data-i18n="critical">Critical</button>
+                    <button class="filter-btn" data-filter="warning" data-i18n="warning">Warning</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table id="violations">
+                    <thead>
+                        <tr>
+                            <th data-i18n="file">File</th>
+                            <th data-i18n="line">Line</th>
+                            <th data-i18n="rule">Rule</th>
+                            <th data-i18n="severity">Severity</th>
+                            <th data-i18n="suggestion">Suggestion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{VIOLATION_ROWS}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Spec Reference -->
+        {{SPEC_REFERENCE}}
+
+        <!-- Footer -->
+        <footer class="footer">
+            Generated by Spec-Analyzer
+        </footer>
+    </div>
+
+    <script>
+        // Internationalization
+        const i18n = {
+            en: {
+                reportTitle: 'Code Compliance Report',
+                project: 'Project',
+                language: 'Language',
+                spec: 'Spec',
+                date: 'Date',
+                filesChecked: 'Files Checked',
+                violations: 'Violations',
+                complianceRate: 'Compliance Rate',
+                categoryStats: 'Category Statistics',
+                category: 'Category',
+                violationCount: 'Violations',
+                percentage: 'Percentage',
+                detailedViolations: 'Detailed Violations',
+                searchPlaceholder: 'Search file or code...',
+                all: 'All',
+                critical: 'Critical',
+                warning: 'Warning',
+                file: 'File',
+                line: 'Line',
+                rule: 'Rule',
+                severity: 'Severity',
+                suggestion: 'Suggestion',
+                mandatory: 'MANDATORY',
+                recommended: 'RECOMMENDED',
+                reference: 'REFERENCE'
+            },
+            zh: {
+                reportTitle: '规范合规性报告',
+                project: '项目',
+                language: '语言',
+                spec: '规范',
+                date: '日期',
+                filesChecked: '检查文件',
+                violations: '违规项',
+                complianceRate: '合规率',
+                categoryStats: '分类统计',
+                category: '分类',
+                violationCount: '违规数',
+                percentage: '占比',
+                detailedViolations: '详细违规',
+                searchPlaceholder: '搜索文件或代码...',
+                all: '全部',
+                critical: '严重',
+                warning: '警告',
+                file: '文件',
+                line: '行号',
+                rule: '规则',
+                severity: '级别',
+                suggestion: '建议',
+                mandatory: '强制',
+                recommended: '推荐',
+                reference: '参考'
+            }
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            // Update text content
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) {
+                    el.textContent = i18n[lang][key];
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[lang][key]) {
+                    el.placeholder = i18n[lang][key];
+                }
+            });
+
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // Update severity tags
+            updateSeverityTags();
+        }
+
+        function updateSeverityTags() {
+            document.querySelectorAll('.tag-danger').forEach(el => {
+                const text = el.textContent.trim();
+                if (text === 'MANDATORY' || text === '强制') {
+                    el.textContent = i18n[currentLang].mandatory;
+                } else if (text === 'Critical' || text === '严重') {
+                    el.textContent = i18n[currentLang].critical;
+                }
+            });
+            document.querySelectorAll('.tag-warning').forEach(el => {
+                const text = el.textContent.trim();
+                if (text === 'RECOMMENDED' || text === '推荐') {
+                    el.textContent = i18n[currentLang].recommended;
+                } else if (text === 'Warning' || text === '警告') {
+                    el.textContent = i18n[currentLang].warning;
+                }
+            });
+            document.querySelectorAll('.tag-info').forEach(el => {
+                const text = el.textContent.trim();
+                if (text === 'REFERENCE' || text === '参考') {
+                    el.textContent = i18n[currentLang].reference;
+                }
+            });
+        }
+
+        // Language toggle
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                setLanguage(this.dataset.lang);
+            });
+        });
+
+        // Search
+        document.getElementById('search').addEventListener('input', function(e) {
+            const q = e.target.value.toLowerCase();
+            document.querySelectorAll('#violations tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+
+        // Filter
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const filter = this.dataset.filter;
+                document.querySelectorAll('#violations tbody tr').forEach(row => {
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const hasTag = row.querySelector('.tag-' + filter);
+                        row.style.display = hasTag ? '' : 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
